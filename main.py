@@ -1,43 +1,86 @@
 import os
-from discord.ext import commands
+from dotenv import load_dotenv
+load_dotenv()
+#import discord
+#from discord.ext import commands
+import interactions
+from interactions import Client, CommandContext, Embed
+from interactions.ext.paginator import Page, Paginator
 import requests
 from googlesearch import search
-bot = commands.Bot(command_prefix='!')
+from nltk.corpus import wordnet
+# bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
+bot = interactions.Client(os.getenv("TOKEN"))
 bot.rsoLink = "https://illinois.campuslabs.com/engage/organization/"
+# client = interactions.Client(os.getenv("TOKEN"))
+bot.linkDict = {}
+bot.useCount = 0
 
 @bot.command()
-
-async def rso(ctx, x):
+@interactions.option()
+async def rso(ctx: interactions.CommandContext, text: str):
+  # x = ' '.join(args)
+  # argCount = len(args)
+  bot.useCount += 1
+  x = text
+  words = []
+  argCount = text.count(' ') + 1
+  idealOccurence = 0
+  if argCount > 1:
+    words = text.split(' ')
+  if argCount == 1:
+    idealOccurence = 1
+  def itContains(thing, rso):
+    output = True
+    for i in thing:
+      if i.lower() not in rso:
+        output = False
+    return output
   url = "https://illinois.campuslabs.com/engage/api/discovery/search/organizations"
   parameters = {"top": "1000", "filter": "", "query": x, "skip": "0"}
   page = requests.get(url, parameters).json()
   links = []
+  pageTitles = []
+  pageLinks = []
+  pageDescs = []
+  pageCats = []
+  realPageTitles = []
+  realPageLinks = []
+  realPageDescs = []
+  realPageCats = []
   for v in page["value"]:
     links.append(
             v["Name"] + " - Link: " + bot.rsoLink
-            + v["WebsiteKey"] + ". " + v["Summary"] + ". Categories : " + str(v["CategoryNames"]),
+            + v["WebsiteKey"] + " " + v["Summary"] + " Categories : " + str(v["CategoryNames"]),
         )
+    pageTitles.append(v["Name"])
+    pageLinks.append(bot.rsoLink + v["WebsiteKey"])
+    pageDescs.append(v["Summary"])
+    pageCats.append(str(v["CategoryNames"]))
+    bot.linkDict[v["Name"] + " - Link: " + bot.rsoLink
+            + v["WebsiteKey"] + " " + v["Summary"] + " Categories : " + str(v["CategoryNames"])] = v["WebsiteKey"]
   output = ""
   count = 0
-  for a in links:
-    if x.lower() in a.lower():
-        output += a + "\n" + "\n"
+  for a in range(len(links)):
+    if (links[a].lower().count(x.lower()) > idealOccurence or x.lower() in bot.linkDict[links[a]].lower()) and itContains(words, links[a].lower()):
+        realPageTitles.append(pageTitles[a])
+        realPageCats.append(pageCats[a])
+        realPageDescs.append(pageDescs[a])
+        realPageLinks.append(pageLinks[a])
         count += 1
-    if count == 5:
-      break
-  if count == 1:
-    await ctx.send("Only one result was found:" + "\n" + output)
-  if count > 1:
-    if len(output) > 2000:
-      await ctx.send("Here are the top " + str(count) + " results:" + "\n" + "\n" + output[0: 1970])
-    else:
-      await ctx.send("Here are the top " + str(count) + " results:" + "\n" + "\n" + output)
-  if len(output) == 0:
-    for j in search("uiuc rso " + x, tld = "com", num = 1, stop = 1):
-      output += j
-    await ctx.send("Sorry, I could not find an RSO matching your query on the official website. Perhaps the following result from a Google search might help: " + output + "\n" + "Only first result has been displayed.")
+  pages = []
+  for i in range(len(realPageTitles)):
+    embedAdd = Embed(title = realPageTitles[i], description = realPageDescs[i])
+    embedAdd.add_field(name = "Link", value = realPageLinks[i])
+    embedAdd.add_field(name = "Categories", value = realPageCats[i])
+    pages.append(Page(realPageTitles[i], embedAdd))
+  if count == 0:
+    #for j in search("uiuc rso " + x, tld = "com", num = 1, stop = 1):
+      #output += j
+    await ctx.send("Sorry, I could not find an RSO matching your query on the official website.")
+  elif count == 1:
+    await ctx.send(embeds = Embed(title = realPageTitles[0], description = realPageDescs[0]))
+  else:
+    await Paginator(bot, ctx, pages, use_index = True, use_select = True).run()
 
-async def addDiscordServer(ctx, x, y):
-  await ctx.send(x + y)
-
-bot.run('OTgyNjkxODEwMTA5NDMxODM4.GvbZAy.Iu1ZVWfrAcXU00u5O6D4moPYwWlCpfMbPVJtDU')
+bot.start()
