@@ -1,4 +1,5 @@
 import os
+from os import environ
 from dotenv import load_dotenv
 from dotenv import dotenv_values
 load_dotenv()
@@ -11,8 +12,8 @@ import requests
 from googlesearch import search
 from nltk.corpus import wordnet
 # bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
-bot = interactions.Client(dotenv_values(".env")["TOKEN"])
-# bot = interactions.Client(os.environ["TOKEN"])
+# bot = interactions.Client(dotenv_values(".env")["TOKEN"])
+bot = interactions.Client(os.environ["TOKEN"])
 bot.rsoLink = "https://illinois.campuslabs.com/engage/organization/"
 # client = interactions.Client(os.getenv("TOKEN"))
 bot.linkDict = {}
