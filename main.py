@@ -10,7 +10,7 @@ import requests
 from googlesearch import search
 from nltk.corpus import wordnet
 # bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
-bot = interactions.Client(os.getenv("TOKEN"))
+bot = interactions.Client(os.environ["TOKEN")])
 bot.rsoLink = "https://illinois.campuslabs.com/engage/organization/"
 # client = interactions.Client(os.getenv("TOKEN"))
 bot.linkDict = {}
