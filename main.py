@@ -21,6 +21,11 @@ bot.useCount = 0
 
 @bot.command()
 @interactions.option()
+async def useCount():
+  await ctx.send(str(useCount))
+
+@bot.command()
+@interactions.option()
 async def rso(ctx: interactions.CommandContext, text: str):
   # x = ' '.join(args)
   # argCount = len(args)
