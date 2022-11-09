@@ -23,7 +23,6 @@ bot.linkDict = {}
 async def rso(ctx: interactions.CommandContext, text: str):
   # x = ' '.join(args)
   # argCount = len(args)
-  bot.useCount += 1
   x = text
   words = []
   argCount = text.count(' ') + 1
