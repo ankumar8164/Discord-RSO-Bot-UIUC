@@ -1,86 +1,43 @@
+# rso contains a class made to make this cleaner
+from rso import RSO
 import os
-from os import environ
+# this import allows us to access the bot token without making it visible to others
 from dotenv import load_dotenv
-from dotenv import dotenv_values
 load_dotenv()
-#import discord
-#from discord.ext import commands
+# interactions is the library used for this bot (chosen for its paginator capability)
 import interactions
-from interactions import Client, CommandContext, Embed
 from interactions.ext.paginator import Page, Paginator
+# requests allows us to access the data from the RSO API
 import requests
-from googlesearch import search
-from nltk.corpus import wordnet
-# bot = commands.Bot(command_prefix='!', intents = discord.Intents.all())
-# bot = interactions.Client(dotenv_values(".env")["TOKEN"])
+# set up the bot and important bot variables (a link to the RSO page essentially)
 bot = interactions.Client(os.environ["TOKEN"])
 bot.rsoLink = "https://illinois.campuslabs.com/engage/organization/"
-# client = interactions.Client(os.getenv("TOKEN"))
-bot.linkDict = {}
 
 @bot.command()
 @interactions.option()
-async def rso(ctx: interactions.CommandContext, text: str):
-  # x = ' '.join(args)
-  # argCount = len(args)
-  x = text
-  words = []
-  argCount = text.count(' ') + 1
-  idealOccurence = 0
-  if argCount > 1:
-    words = text.split(' ')
-  if argCount == 1:
-    idealOccurence = 1
-  def itContains(thing, rso):
-    output = True
-    for i in thing:
-      if i.lower() not in rso:
-        output = False
-    return output
-  url = "https://illinois.campuslabs.com/engage/api/discovery/search/organizations"
-  parameters = {"top": "1000", "filter": "", "query": x, "skip": "0"}
-  page = requests.get(url, parameters).json()
-  links = []
-  pageTitles = []
-  pageLinks = []
-  pageDescs = []
-  pageCats = []
-  realPageTitles = []
-  realPageLinks = []
-  realPageDescs = []
-  realPageCats = []
-  for v in page["value"]:
-    links.append(
-            v["Name"] + " - Link: " + bot.rsoLink
-            + v["WebsiteKey"] + " " + v["Summary"] + " Categories : " + str(v["CategoryNames"]),
-        )
-    pageTitles.append(v["Name"])
-    pageLinks.append(bot.rsoLink + v["WebsiteKey"])
-    pageDescs.append(v["Summary"])
-    pageCats.append(str(v["CategoryNames"]))
-    bot.linkDict[v["Name"] + " - Link: " + bot.rsoLink
-            + v["WebsiteKey"] + " " + v["Summary"] + " Categories : " + str(v["CategoryNames"])] = v["WebsiteKey"]
-  output = ""
-  count = 0
-  for a in range(len(links)):
-    if (links[a].lower().count(x.lower()) > idealOccurence or x.lower() in bot.linkDict[links[a]].lower()) and itContains(words, links[a].lower()):
-        realPageTitles.append(pageTitles[a])
-        realPageCats.append(pageCats[a])
-        realPageDescs.append(pageDescs[a])
-        realPageLinks.append(pageLinks[a])
-        count += 1
+async def rso(ctx: interactions.CommandContext, search: str):
+  # make the search lower case just for ease later
+  search = search.lower()
+  apiURL = "https://illinois.campuslabs.com/engage/api/discovery/search/organizations"
+  parameters = {"top": "1000", "filter": "", "query": search, "skip": "0"}
+  # get the data
+  relevantDataFromAPI = requests.get(apiURL, parameters).json()
+  # an array of RSOs to store all those that we get initially
+  initialRSOs = []
+  # construct and insert all the RSOs we get
+  for v in relevantDataFromAPI["value"]:
+    initialRSOs.append(RSO(v["Name"], v["WebsiteKey"], v["Summary"], v["CategoryNames"]))
+  # this will be used to construct our paginator later
   pages = []
-  for i in range(len(realPageTitles)):
-    embedAdd = Embed(title = realPageTitles[i], description = realPageDescs[i])
-    embedAdd.add_field(name = "Link", value = realPageLinks[i])
-    embedAdd.add_field(name = "Categories", value = realPageCats[i])
-    pages.append(Page(realPageTitles[i], embedAdd))
-  if count == 0:
-    #for j in search("uiuc rso " + x, tld = "com", num = 1, stop = 1):
-      #output += j
+  # use methods of the rso class to check validity
+  for rso in initialRSOs:
+    if rso.checkValidity(search) == True:
+      pages.append(Page("", rso.getEmbed()))
+  # conditional handling for different valid RSO counts
+  if len(pages) == 0:
     await ctx.send("Sorry, I could not find an RSO matching your query on the official website.")
-  elif count == 1:
-    await ctx.send(embeds = Embed(title = realPageTitles[0], description = realPageDescs[0]))
+  elif len(pages) == 1:
+    await ctx.send(embeds = pages[0])
   else:
     await Paginator(bot, ctx, pages, use_index = True, use_select = True).run()
 
