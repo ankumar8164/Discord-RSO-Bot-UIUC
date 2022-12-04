@@ -32,15 +32,12 @@ class RSO:
         return allWordsIn
 
     def checkValidity(self, userInput):
-        splitIntoWords = []
-        idealOccurence = 0
         # the idea is that if our userInput is just one word, we either want that word present at least twice or be in the website key
         # the reason for website key is that for some inputs (like if someone searches 'hkn'), it may discount actually valid RSOs
         # because the phrase 'hkn' does not appear twice in the description, but it is in the website key
         # if it is two words, we want to check word by word (e.g. HKN is also related to EE, but the description says electrical and computer engineering)
         # by checking each word separately, we will "find" EE even though it may not be explicitly written as such
         if userInput.count(' ') + 1 > 1:
-            splitIntoWords = userInput.split(' ')
+            return userInput in self.websiteKey or self.confirmAllWords(self, self.generateFullSummary(), userInput.split())
         else:
-            idealOccurence = 1
-        return (self.generateFullSummary().count(userInput) > idealOccurence or userInput in self.websiteKey) or self.confirmAllWords(self.generateFullSummary(), splitIntoWords)
+            return self.generateFullSummary().count(userInput) > 1 or userInput in self.websiteKey
