@@ -36,6 +36,8 @@ async def rso(ctx: interactions.CommandContext, search: str):
   # conditional handling for different valid RSO counts
   if len(pages) == 0:
     await ctx.send("Sorry, I could not find an RSO matching your query on the official website.")
+  elif len(pages) == 1:
+    await ctx.send(embeds = pages[0])
   else:
     await Paginator(bot, ctx, pages, use_index = True, use_select = True).run()
 
