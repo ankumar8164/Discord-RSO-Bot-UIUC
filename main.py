@@ -29,15 +29,18 @@ async def rso(ctx: interactions.CommandContext, search: str):
     initialRSOs.append(RSO(v["Name"], v["WebsiteKey"], v["Summary"], v["CategoryNames"]))
   # this will be used to construct our paginator later
   pages = []
+  lastRSO = 0
   # use methods of the rso class to check validity
   for rso in initialRSOs:
     if rso.checkValidity(search) == True:
       pages.append(Page("", rso.getEmbed()))
+      # I have this variable in the case that we only have one valid organization, as Paginator does not accept a list with only one page
+      lastRSO = rso
   # conditional handling for different valid RSO counts
   if len(pages) == 0:
     await ctx.send("Sorry, I could not find an RSO matching your query on the official website.")
   elif len(pages) == 1:
-    await ctx.send(embeds = pages[0])
+    await ctx.send(embeds = lastRSO.getEmbed())
   else:
     await Paginator(bot, ctx, pages, use_index = True, use_select = True).run()
 
