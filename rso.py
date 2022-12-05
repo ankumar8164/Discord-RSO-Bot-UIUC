@@ -12,9 +12,9 @@ class RSO:
     def getEmbed(self):
         # create embed and add fields as needed before returning
         # the new line chars are just there to make it look a little nicer
-        embed = Embed(title = self.name, description = '\n' + self.summary + '\n')
-        embed.add_field(name = "Link", value = '\n' + self.rsoLink + self.websiteKey + '\n')
-        embed.add_field(name = "Categories", value = '\n' + str(self.categories))
+        embed = Embed(title = self.name, description = self.summary)
+        embed.add_field(name = "Link", value = self.rsoLink + self.websiteKey)
+        embed.add_field(name = "Categories", value = str(self.categories))
         return embed
 
     def generateFullSummary(self):
