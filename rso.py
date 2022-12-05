@@ -38,6 +38,6 @@ class RSO:
         # if it is two words, we want to check word by word (e.g. HKN is also related to EE, but the description says electrical and computer engineering)
         # by checking each word separately, we will "find" EE even though it may not be explicitly written as such
         if userInput.count(' ') + 1 > 1:
-            return userInput in self.websiteKey or self.confirmAllWords(self, self.generateFullSummary(), userInput.split())
+            return userInput in self.websiteKey or self.confirmAllWords(self.generateFullSummary(), userInput.split())
         else:
             return self.generateFullSummary().count(userInput) > 1 or userInput in self.websiteKey
