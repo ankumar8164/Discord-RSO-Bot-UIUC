@@ -23,13 +23,11 @@ class RSO:
             + self.websiteKey + " " + self.summary + " Categories : " + str(self.categories)).lower()
 
     def confirmAllWords(self, fullSummary, wordArray):
-        allWordsIn = True
         for word in wordArray:
             #make sure that all words are present (for example for table tennis, we would check both table and tennis)
             if word not in fullSummary:
-                allWordsIn = False
-                break
-        return allWordsIn
+                return False
+        return True
 
     def checkValidity(self, userInput):
         # the idea is that if our userInput is just one word, we either want that word present at least twice or be in the website key
